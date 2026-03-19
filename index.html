@@ -218,9 +218,9 @@ ALWAYS:
         },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
-          max_tokens: 1024,
+          max_tokens: 300,
           system: SYSTEM_PROMPT,
-          messages: conversationHistory.slice(-20)
+          messages: conversationHistory.slice(-10)
         })
       });
       if (!resp.ok) throw new Error(`API ${resp.status}: ${await resp.text()}`);
