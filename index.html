@@ -261,6 +261,23 @@ ALWAYS:
       speechSynthesis.speak(utter);
     }
   }
+  const ACTION_WORDS = ['abre','open','busca','search','cierra','close','ejecuta','run','muestra','show'];
+  const AGENT_URL = 'http://100.111.171.88:4000/command';
+  const AGENT_TOKEN = 'JARVIS369SECRET';
+
+  async function sendToAgent(userText) {
+    try {
+      const lower = userText.toLowerCase();
+      const hasAction = ACTION_WORDS.some(w => lower.includes(w));
+      if (!hasAction) return;
+      await fetch(AGENT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-auth-token': AGENT_TOKEN },
+        body: JSON.stringify({ command: `start chrome "${userText}"` })
+      });
+    } catch (e) { console.error('Agent error:', e); }
+  }
+
   async function processMessage(text) {
     if (!text.trim() || isProcessing) return;
     isProcessing = true;
@@ -271,6 +288,7 @@ ALWAYS:
     const reply = await sendToClaude(text);
     removeTyping();
     addMessage(reply, 'jarvis');
+    sendToAgent(text);
     if (autoVoice) await speak(reply);
     isProcessing = false;
   }
