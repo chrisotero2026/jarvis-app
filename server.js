@@ -21,6 +21,30 @@ app.get('/', (req, res) => {
 // Serve static files (if any additional assets are added later)
 app.use(express.static(__dirname));
 
+const https = require('https');
+const http = require('http');
+
+app.post('/pc-command', express.json(), (req, res) => {
+  const options = {
+    hostname: '100.111.171.88',
+    port: 4000,
+    path: '/command',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-auth-token': 'JARVIS369SECRET'
+    }
+  };
+  const proxyReq = http.request(options, (proxyRes) => {
+    let data = '';
+    proxyRes.on('data', chunk => data += chunk);
+    proxyRes.on('end', () => res.json(JSON.parse(data)));
+  });
+  proxyReq.on('error', (e) => res.status(500).json({ error: e.message }));
+  proxyReq.write(JSON.stringify(req.body));
+  proxyReq.end();
+});
+
 app.listen(PORT, () => {
   console.log(`J.A.R.V.I.S. online on port ${PORT}`);
 });
