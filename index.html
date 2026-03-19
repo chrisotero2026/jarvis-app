@@ -252,7 +252,7 @@
     clearTimeout(silenceTimer);
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     recognition = new SR();
-    recognition.lang = 'es-US';
+    recognition.lang = '';
     recognition.interimResults = true;
     recognition.continuous = true;
     recognition.maxAlternatives = 1;
@@ -300,7 +300,7 @@
     wakeRecognition = new SR();
     wakeRecognition.continuous = true;
     wakeRecognition.interimResults = true;
-    wakeRecognition.lang = 'es-US';
+    wakeRecognition.lang = '';
     wakeRecognition.onresult = (e) => {
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const t = e.results[i][0].transcript.toLowerCase();
