@@ -352,7 +352,11 @@ RULES:
       voiceStatus.innerHTML = '<span class="status-dot"></span>Voice Ready';
     };
     recognition.onerror = (e) => {
-      console.error('Speech error:', e.error);
+      if (e.error === 'aborted' || e.error === 'not-allowed') {
+        console.log('Speech stopped:', e.error);
+      } else {
+        console.error('Speech error:', e.error);
+      }
       micBtn.classList.remove('recording');
       arcReactor.classList.remove('reactor-listening');
       interimPreview.textContent = '';
@@ -389,7 +393,7 @@ RULES:
       }
     };
     wakeRecognition.onend = () => { if (wakeWordActive && !isProcessing) setTimeout(() => startWakeWordListening(), 500); };
-    wakeRecognition.onerror = (e) => { if (e.error !== 'aborted' && wakeWordActive) setTimeout(() => startWakeWordListening(), 1000); };
+    wakeRecognition.onerror = (e) => { if (e.error !== 'aborted' && e.error !== 'not-allowed' && wakeWordActive) setTimeout(() => startWakeWordListening(), 1000); };
     wakeRecognition.start();
     voiceStatus.innerHTML = '<span class="status-dot"></span>Wake Word Active';
   }
@@ -407,6 +411,7 @@ RULES:
       if (toSend) processMessage(toSend);
     } else {
       if (wakeRecognition) { wakeRecognition.abort(); wakeRecognition = null; }
+      if (recognition) { recognition.abort(); recognition = null; }
       startListening();
     }
   });
