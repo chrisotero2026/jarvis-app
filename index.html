@@ -265,15 +265,42 @@ RULES:
   const AGENT_URL = 'https://agent.jarvis369.com/command';
   const AGENT_TOKEN = 'JARVIS369SECRET';
 
+  const SITE_MAP = [
+    { keywords: ['youtube'], url: 'https://youtube.com' },
+    { keywords: ['google'], url: 'https://google.com' },
+    { keywords: ['mls','bright','brightmls'], url: 'https://brightmls.com' },
+    { keywords: ['zillow'], url: 'https://zillow.com' },
+    { keywords: ['realtor'], url: 'https://realtor.com' },
+    { keywords: ['gmail','correo','email'], url: 'https://mail.google.com' },
+    { keywords: ['facebook','fb'], url: 'https://facebook.com' },
+    { keywords: ['instagram','insta'], url: 'https://instagram.com' },
+    { keywords: ['twitter','x.com'], url: 'https://x.com' },
+    { keywords: ['spotify'], url: 'https://spotify.com' },
+    { keywords: ['netflix'], url: 'https://netflix.com' },
+    { keywords: ['amazon'], url: 'https://amazon.com' },
+    { keywords: ['chatgpt'], url: 'https://chatgpt.com' },
+    { keywords: ['claude'], url: 'https://claude.ai' },
+    { keywords: ['maps','mapa'], url: 'https://maps.google.com' },
+  ];
+
   async function sendToAgent(userText) {
     try {
       const lower = userText.toLowerCase();
       const hasAction = ACTION_WORDS.some(w => lower.includes(w));
       if (!hasAction) return;
+      let url = null;
+      for (const site of SITE_MAP) {
+        if (site.keywords.some(k => lower.includes(k))) { url = site.url; break; }
+      }
+      if (!url) {
+        const urlMatch = lower.match(/https?:\/\/[^\s"]+/);
+        if (urlMatch) url = urlMatch[0];
+      }
+      if (!url) url = `https://www.google.com/search?q=${encodeURIComponent(userText)}`;
       await fetch(AGENT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-auth-token': AGENT_TOKEN },
-        body: JSON.stringify({ command: `start chrome "${userText}"` })
+        body: JSON.stringify({ command: `start chrome "${url}"` })
       });
     } catch (e) { console.error('Agent error:', e); }
   }
