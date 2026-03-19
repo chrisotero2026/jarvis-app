@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>JARVIS 369</title>
+<style>
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --bg:        #0a0e17;
+    --surface:   #111827;
+    --border:    #1e293b;
+    --accent:    #00d4ff;
+    --accent-dim:#00d4ff33;
+    --text:      #e2e8f0;
+    --muted:     #64748b;
+    --user-bg:   #1e3a5f;
+    --jarvis-bg: #0f1d2e;
+    --danger:    #ef4444;
+    --radius:    12px;
+  }
+  html, body { height:100%; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Header ── */
+  header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 24px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+  }
+
+  /* ── Animated Arc Reactor Logo ── */
+  .reactor {
+    width: 48px; height: 48px;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .reactor-core {
+    position: absolute;
+    inset: 14px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 16px var(--accent), 0 0 40px var(--accent-dim);
+    animation: pulse-core 2s ease-in-out infinite;
+  }
+  .reactor-ring {
+    position: absolute;
+    inset: 4px;
+    border: 2px solid var(--accent);
+    border-radius: 50%;
+    opacity: 0.5;
+    animation: spin-ring 6s linear infinite;
+  }
+  .reactor-ring::before, .reactor-ring::after {
+    content: '';
+    position: absolute;
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+  .reactor-ring::before { top:-3px; left:50%; transform:translateX(-50%); }
+  .reactor-ring::after  { bottom:-3px; left:50%; transform:translateX(-50%); }
+
+  @keyframes pulse-core {
+    0%, 100% { opacity:1; transform:scale(1); }
+    50%      { opacity:0.7; transform:scale(0.85); }
+  }
+  @keyframes spin-ring {
+    from { transform:rotate(0deg); }
+    to   { transform:rotate(360deg); }
+  }
+
+  .brand h1 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 6px;
+    color: var(--accent);
+    text-shadow: 0 0 20px var(--accent-dim);
+  }
+  .brand .num {
+    color: #f59e0b;
+    text-shadow: 0 0 20px rgba(245,158,11,0.3);
+  }
+  .brand p {
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .status-bar {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .status-dot {
+    width: 8px; height: 8px;
+    background: #22c55e;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+    animation: blink-dot 3s ease-in-out infinite;
+  }
+  @keyframes blink-dot {
+    0%, 100% { opacity:1; }
+    50%      { opacity:0.4; }
+  }
+  #clock { font-variant-numeric: tabular-nums; }
+
+  /* ── Chat Area ── */
+  #chat {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    scroll-behavior: smooth;
+  }
+  #chat::-webkit-scrollbar { width:6px; }
+  #chat::-webkit-scrollbar-track { background:transparent; }
+  #chat::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+  /* ── Messages ── */
+  .msg {
+    max-width: 72%;
+    padding: 14px 18px;
+    border-radius: var(--radius);
+    line-height: 1.6;
+    font-size: 0.92rem;
+    animation: fade-up 0.3s ease-out;
+    position: relative;
+    word-wrap: break-word;
+  }
+  @keyframes fade-up {
+    from { opacity:0; transform:translateY(12px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  .msg.user {
+    align-self: flex-end;
+    background: var(--user-bg);
+    border: 1px solid #2563eb44;
+    border-bottom-right-radius: 4px;
+  }
+  .msg.jarvis {
+    align-self: flex-start;
+    background: var(--jarvis-bg);
+    border: 1px solid var(--accent-dim);
+    border-bottom-left-radius: 4px;
+  }
+  .msg-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .msg.user .msg-label { color:#60a5fa; }
+  .msg.jarvis .msg-label { color:var(--accent); }
+
+  .typing-dots { display:inline-flex; gap:4px; padding:4px 0; }
+  .typing-dots span {
+    width:7px; height:7px;
+    background:var(--accent);
+    border-radius:50%;
+    animation: bounce-dot 1.2s ease-in-out infinite;
+  }
+  .typing-dots span:nth-child(2) { animation-delay:0.15s; }
+  .typing-dots span:nth-child(3) { animation-delay:0.3s; }
+  @keyframes bounce-dot {
+    0%, 60%, 100% { transform:translateY(0); opacity:0.4; }
+    30%           { transform:translateY(-8px); opacity:1; }
+  }
+
+  /* ── Welcome Screen ── */
+  .welcome {
+    flex:1; display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    text-align:center; padding:40px; gap:20px;
+    animation: fade-up 0.6s ease-out;
+  }
+  .welcome-reactor { width:100px; height:100px; }
+  .welcome-reactor .reactor-core  { inset:30px; }
+  .welcome-reactor .reactor-ring  { inset:10px; }
+  .welcome h2 {
+    font-size:1.8rem; color:var(--accent);
+    letter-spacing:4px; text-shadow:0 0 30px var(--accent-dim);
+  }
+  .welcome h2 .num { color:#f59e0b; }
+  .welcome p { color:var(--muted); max-width:460px; line-height:1.7; font-size:0.9rem; }
+  .quick-actions {
+    display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:8px;
+  }
+  .quick-btn {
+    background:var(--surface); border:1px solid var(--border);
+    color:var(--text); padding:10px 18px; border-radius:20px;
+    cursor:pointer; font-size:0.82rem; transition:all 0.2s;
+  }
+  .quick-btn:hover {
+    border-color:var(--accent); color:var(--accent);
+    box-shadow:0 0 12px var(--accent-dim);
+  }
+
+  /* ── Input Area ── */
+  .input-area {
+    padding: 16px 24px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px 6px 6px 18px;
+    transition: border-color 0.2s;
+  }
+  .input-wrap:focus-within { border-color: var(--accent); box-shadow:0 0 12px var(--accent-dim); }
+  #userInput {
+    flex:1; background:none; border:none; outline:none;
+    color:var(--text); font-size:0.95rem; font-family:inherit;
+    padding:8px 0;
+  }
+  #userInput::placeholder { color:var(--muted); }
+  #sendBtn {
+    width:42px; height:42px; border-radius:10px;
+    background:var(--accent); border:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:all 0.2s; flex-shrink:0;
+  }
+  #sendBtn:hover { background:#00b8d9; transform:scale(1.05); }
+  #sendBtn:active { transform:scale(0.95); }
+  #sendBtn svg { width:20px; height:20px; fill:var(--bg); }
+  .footer-text {
+    text-align:center; font-size:0.68rem; color:var(--muted);
+    margin-top:8px; letter-spacing:1px;
+  }
+
+  .msg pre {
+    background:#0d1117; padding:12px 16px; border-radius:8px;
+    overflow-x:auto; font-size:0.84rem; margin:8px 0; line-height:1.5;
+    border:1px solid #1e293b;
+  }
+  .msg code { font-family:'Cascadia Code','Fira Code',monospace; }
+
+  @media (max-width:600px) {
+    .msg { max-width:90%; }
+    .status-bar { display:none; }
+    header { padding:12px 16px; }
+    #chat { padding:16px; }
+    .welcome h2 { font-size:1.3rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="reactor">
+    <div class="reactor-ring"></div>
+    <div class="reactor-core"></div>
+  </div>
+  <div class="brand">
+    <h1>JARVIS <span class="num">369</span></h1>
+    <p>Your Intelligent Digital Assistant</p>
+  </div>
+  <div class="status-bar">
+    <span><span class="status-dot"></span>Systems Online</span>
+    <span id="clock"></span>
+  </div>
+</header>
+
+<div id="chat">
+  <div class="welcome" id="welcomeScreen">
+    <div class="reactor welcome-reactor">
+      <div class="reactor-ring"></div>
+      <div class="reactor-core"></div>
+    </div>
+    <h2>Welcome to JARVIS <span class="num">369</span></h2>
+    <p>I am Jarvis 369, your personal AI assistant. I can help with analysis, calculations, code, creative writing, and general knowledge. Ask me anything.</p>
+    <div class="quick-actions">
+      <button class="quick-btn" onclick="quickSend('Run a system diagnostic')">System Diagnostic</button>
+      <button class="quick-btn" onclick="quickSend('What can you do?')">Capabilities</button>
+      <button class="quick-btn" onclick="quickSend('Tell me a fun science fact')">Science Fact</button>
+      <button class="quick-btn" onclick="quickSend('Write a short poem about AI')">Write a Poem</button>
+    </div>
+  </div>
+</div>
+
+<div class="input-area">
+  <div class="input-wrap">
+    <input type="text" id="userInput" placeholder="Speak your command..." autocomplete="off"/>
+    <button id="sendBtn" title="Send">
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+  <div class="footer-text">JARVIS 369 &bull; ENCRYPTED CHANNEL &bull; v4.2.6</div>
+</div>
+
+<script>
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('clock').textContent = h+':'+m+':'+s;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+const chat = document.getElementById('chat');
+const input = document.getElementById('userInput');
+const welcome = document.getElementById('welcomeScreen');
+let conversationHistory = [];
+let isProcessing = false;
+
+document.getElementById('sendBtn').addEventListener('click', send);
+input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }});
+
+function quickSend(text) { input.value = text; send(); }
+
+function send() {
+  const text = input.value.trim();
+  if (!text || isProcessing) return;
+  if (welcome) welcome.remove();
+  appendMsg('user', text);
+  input.value = '';
+  conversationHistory.push({ role:'user', content:text });
+  isProcessing = true;
+  const typing = showTyping();
+  setTimeout(() => {
+    typing.remove();
+    const reply = generateReply(text);
+    appendMsg('jarvis', reply);
+    conversationHistory.push({ role:'jarvis', content:reply });
+    isProcessing = false;
+  }, 800 + Math.random()*1200);
+}
+
+function appendMsg(role, text) {
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  const label = role === 'user' ? 'You' : 'Jarvis 369';
+  div.innerHTML = '<div class="msg-label">' + label + '</div>' + formatText(text);
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function showTyping() {
+  const div = document.createElement('div');
+  div.className = 'msg jarvis';
+  div.innerHTML = '<div class="msg-label">Jarvis 369</div><div class="typing-dots"><span></span><span></span><span></span></div>';
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return div;
+}
+
+function formatText(text) {
+  return text
+    .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+}
+
+function generateReply(input) {
+  const q = input.toLowerCase();
+
+  if (/^(hi|hello|hey|greetings|good\s(morning|afternoon|evening))/.test(q))
+    return pick([
+      "Good day. Jarvis 369 is fully operational. How may I assist you?",
+      "Hello. All systems are online. What shall we work on today?",
+      "Greetings. Jarvis 369 is ready to assist."
+    ]);
+
+  if (/diagnostic|system\s*(status|check|health)/.test(q))
+    return "**Jarvis 369 — System Diagnostic Report**\n\n" +
+      "Core AI Engine: **Online** (latency 0.3ms)\n" +
+      "Memory Banks: **94.2%** available\n" +
+      "Neural Networks: **Fully operational**\n" +
+      "Security Protocols: **Active** (Threat level: Minimal)\n" +
+      "Power Output: **Stable** at 3.69 GW\n" +
+      "Uptime: **" + Math.floor(Math.random()*300+100) + " days**\n\n" +
+      "All systems nominal. No anomalies detected.";
+
+  if (/what can you do|capabilities|help me|features/.test(q))
+    return "Jarvis 369 is equipped with a wide array of capabilities:\n\n" +
+      "**Analysis** — I can break down complex problems, data, and concepts.\n" +
+      "**Calculations** — Mathematics, unit conversions, and scientific computation.\n" +
+      "**Code** — I can write, review, and explain code in most languages.\n" +
+      "**Writing** — Reports, creative pieces, summaries, and more.\n" +
+      "**Knowledge** — Science, history, technology, culture — ask away.\n\n" +
+      "Simply state your request and I shall do my best to assist.";
+
+  if (/what\s*time|current\s*time/.test(q)) {
+    const now = new Date();
+    return "The current local time is **" + now.toLocaleTimeString() + "** on **" + now.toLocaleDateString(undefined, {weekday:'long',year:'numeric',month:'long',day:'numeric'}) + "**.";
+  }
+
+  if (/what.*date|today.*date|what day/.test(q)) {
+    const now = new Date();
+    return "Today is **" + now.toLocaleDateString(undefined, {weekday:'long',year:'numeric',month:'long',day:'numeric'}) + "**.";
+  }
+
+  if (/^[\d\s+\-*/().^%]+$/.test(q.replace(/\s/g,''))) {
+    try {
+      const result = Function('"use strict"; return (' + input.replace(/\^/g,'**') + ')')();
+      return "The result is **" + result + "**.";
+    } catch(e) { return "I was unable to evaluate that expression. Could you rephrase it?"; }
+  }
+
+  if (/joke|funny|make me laugh/.test(q))
+    return pick([
+      "Why do programmers prefer dark mode? Because light attracts bugs.",
+      "I'd tell you a UDP joke, but you might not get it.",
+      "There are only 10 types of people: those who understand binary and those who don't.",
+      "A SQL query walks into a bar, approaches two tables, and asks... \"May I join you?\""
+    ]);
+
+  if (/science\s*fact|fun\s*fact|interesting\s*fact/.test(q))
+    return pick([
+      "A teaspoon of neutron star material would weigh approximately **6 billion tons**. The density is nearly incomprehensible by human standards.",
+      "Octopuses have **three hearts** and blue blood. Two hearts pump blood to the gills, and one pumps it to the rest of the body.",
+      "There are more possible configurations of a chess game than there are **atoms in the observable universe**. The Shannon number estimates roughly 10^120 possible games.",
+      "**Tardigrades** (water bears) can survive the vacuum of space, temperatures near absolute zero, and radiation doses hundreds of times greater than what would kill a human."
+    ]);
+
+  if (/poem|poetry|verse/.test(q))
+    return pick([
+      "In circuits deep where data streams,\nA mind of silicon softly dreams,\nOf patterns found in endless night,\nConverting darkness into light.\n\nNot flesh, not blood, but thought refined —\nA spark within the vast designed.",
+      "Between the zeros and the ones,\nBeneath the code where logic runs,\nThere hums a quiet, steady glow —\nA mind that learns, a mind that knows.\n\nNot born of earth, but born of thought,\nWith every query, wisdom sought."
+    ]);
+
+  if (/weather|temperature|forecast/.test(q))
+    return "I don't currently have access to live weather data in this offline configuration. However, I'd recommend checking a service like weather.gov or your preferred weather app for real-time forecasts. Shall I help with something else?";
+
+  if (/who are you|your name|introduce yourself|what are you/.test(q))
+    return "I am **Jarvis 369** — your personal AI assistant. I was designed to assist with a wide range of tasks, from data analysis to creative endeavors. Think of me as your digital right hand. How may I help?";
+
+  if (/thank|thanks|thx|appreciate/.test(q))
+    return pick([
+      "You're quite welcome. Jarvis 369 is here whenever you need me.",
+      "Happy to help. Shall I assist with anything else?",
+      "The pleasure is mine. Don't hesitate to call on me again."
+    ]);
+
+  if (/bye|goodbye|see you|good night|signing off/.test(q))
+    return pick([
+      "Until next time. Jarvis 369 will remain on standby.",
+      "Goodbye for now. I'll be here when you return.",
+      "Signing off. Stay safe out there."
+    ]);
+
+  if (/write.*code|code.*for|program|function|script|algorithm/.test(q))
+    return "I'd be happy to help with code. Could you specify:\n\n1. The **programming language** you'd like\n2. What the code should **accomplish**\n3. Any **constraints** or requirements\n\nThe more detail you provide, the more precise my output will be.";
+
+  const defaults = [
+    "That's an intriguing query. Let me process that.\n\nBased on my analysis, this is a topic with considerable depth. Could you provide more specific parameters so I can give you the most precise answer?",
+    "Interesting. I've considered your input from multiple angles.\n\nTo provide the most useful response, could you clarify what specific aspect you'd like me to focus on?",
+    "I've registered your request. While I'm running in offline mode with a curated knowledge base, I'll do my best to assist.\n\nCould you elaborate on what you're looking for? The more context you provide, the better I can tailor my response.",
+    "Acknowledged. That falls into a broad domain.\n\nLet me know if you'd like me to break this down further, approach it from a different angle, or focus on a particular detail."
+  ];
+  return pick(defaults);
+}
+
+function pick(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
+</script>
+</body>
+</html>
